@@ -3,35 +3,116 @@ Feature: Validate favorite and comment function
 
   Background: Preconditions
     * url apiUrl
+    * def isTimeValidator = read('classpath:helpers/TimeValidator.js')
+    * configure afterScenario =  function(){ karate.call('Hook.feature'); }
+    * def responseForAddArticle = call read('AddArticles.feature')
+    * def slugID = responseForAddArticle.article.slug
 
   Scenario: Favorite articles
-        # Step 1: Add new article (optimize here - Create a AddArticle.feature)
-        # Step 2: Get the favorites count and slug ID for the the article, save it to variables
-        # Step 3: Make POST request to increase favorites count for the article
-        # Step 4: Verify response schema
-        # Step 5: Verify that favorites article incremented by 1
-        # Example
-        * def initialCount = 0
-        * def response = {"favoritesCount": 1}
-        * match response.favoritesCount == initialCount + 1
-        # Step 6: Get all favorite articles
-        # Step 7: Verify response schema
-        # Step 8: Verify that slug ID from Step 2 exist in one of the favorite articles
-        # Step 9: Delete the article (optimize here with afterScenario - create a Hook.feature)
+    * def favoritesCount = responseForAddArticle.article.favoritesCount
+    Given path 'articles', slugID, 'favorite'
+    When method Post
+    Then status 200
+    And match response.article ==
+        """
+        {
+            "id": "#number",
+            "slug": "#string",
+            "title": "#string",
+            "description": "#string",
+            "body": "#string",
+            "createdAt": "#? isTimeValidator(_)",
+            "updatedAt": "#? isTimeValidator(_)",
+            "authorId": "#number",
+             "tagList": "#array",
+             "author": {
+                "username": "#string",
+                    "bio": "#string",
+                    "image": "#string",
+                    "following": '#boolean'
+                },
+             "favoritedBy": [
+                {
+                    "id": "#number",
+                    "email": "#string",
+                    "username": "#string",
+                    "password": "#string",
+                    "image": "#string",
+                    "bio": "#string",
+                    "demo": '#boolean'
+                }
+             ],
+             "favorited": '#boolean',
+             "favoritesCount": '#number',
+        }
+        """
+    And match response.article.favoritesCount == favoritesCount + 1
+    * def username = response.article.author.username
+    Given params {limit: 10, offset: 0, favorited: "#(username)"}
+    Given path 'articles'
+    When method Get
+    Then status 200
+    And match response.article ==
+        """
+        {
+            "slug": '#string',
+            "title": '#string',
+            "description": '#string',
+            "body": '#string',
+            "createdAt": '#string',
+            "updatedAt": '#string',
+            "authorId": '#number',
+            "director": '#string',
+            "tagList": '#array',
+            "author":{
+                "username": '#string',
+                "bio": '#string',
+                "image": '#string',
+                "following": '#boolean',
+            },
+            "favoritesCount": '#number',
+            "favorited": '#boolean'
+         }
+        """
+    And match response.articles[*].slug contains slugID
 
   Scenario: Comment articles
-        # Step 1: Add new article (optimize here - Create a AddArticle.feature)
-        # Step 2: Get the slug ID for the article, save it to variable
-        # Step 3: Make a GET call to 'comments' end-point to get all comments
-        # Step 4: Verify response schema
-        # Step 5: Get the count of the comments array length and save to variable
-        # Example
-        * def responseWithComments = [{"article": "first"}, {article: "second"}]
-        * def articlesCount = responseWithComments.length
-        # Step 6: Make a POST request to publish a new comment
-        # Step 7: Verify response schema that should contain posted comment text
-        # Step 8: Get the list of all comments for this article one more time
-        # Step 9: Verify number of comments increased by 1 (similar like we did with favorite counts)
-        # Step 10: Make a DELETE request to delete comment
-        # Step 11: Get all comments again and verify number of comments decreased by 1
-        # Step 12: Delete the article (optimize here with afterScenario - create a Hook.feature)
+    * call read('ArticleComments.feature')
+    And match response ==
+        """
+            {
+               "comments": "#array"
+            }
+        """
+    * def articlesCount = response.comments.length
+    * def comment = "My comment" + parseInt(Math.random()*9999)
+    Given path 'articles', slugID, 'comments'
+    And request {"comment": {"body": "#(comment)"}}
+    When method Post
+    Then status 200
+    * def commentID = response.comment.id
+    And match response ==
+        """
+            {
+            "comment": {
+                "id": '#number',
+                "createdAt": "#? isTimeValidator(_)",
+                "updatedAt": "#? isTimeValidator(_)",
+                "body": "#string",
+                "author": {
+                    "username": "#string",
+                    "bio": "##string",
+                    "image": "#string",
+                    "following": '#boolean'
+                }
+            }
+        }
+        """
+    * call read('ArticleComments.feature')
+    And response.comments.length == commentsCount + 1
+    * def commentsCount = response.comments.length
+    Given path 'articles', slugID, 'comments', commentID
+    When method Delete
+    Then status 204
+    * call read('ArticleComments.feature')
+    And response.comments.length == commentsCount - 1
