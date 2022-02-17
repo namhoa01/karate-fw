@@ -5,14 +5,14 @@ function fn() {
     env = 'dev';
   }
   var config = {
-    apiUrl: 'https://api.realworld.io/api/'
+    apiUrl: 'http://api.realworld.io/api/'
   }
   if (env == 'dev') {
-    config.userEmail = 'namhoang3860@fakegmail.com'
+    config.userEmail = 'namhoang5246@fakegmail.com'
     config.userPassword = 'Kms@2019'
   }
   else if (env == 'qa') {
-    config.userEmail = 'namhoang3860@fakegmail.com'
+    config.userEmail = 'namhoang5246@fakegmail.com'
     config.userPassword = 'Kms@2019'
   }
 

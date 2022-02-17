@@ -6,10 +6,10 @@ Feature: Validate favorite and comment function
     * def isTimeValidator = read('classpath:helpers/TimeValidator.js')
     * configure afterScenario =  function(){ karate.call('Hook.feature'); }
     * def responseForAddArticle = call read('AddArticles.feature')
-    * def slugID = responseForAddArticle.article.slug
+    * def slugID = responseForAddArticle.id
 
   Scenario: Favorite articles
-    * def favoritesCount = responseForAddArticle.article.favoritesCount
+    * def favoritesCount = responseForAddArticle.favoritesCount
     Given path 'articles', slugID, 'favorite'
     When method Post
     Then status 200
@@ -27,7 +27,7 @@ Feature: Validate favorite and comment function
              "tagList": "#array",
              "author": {
                 "username": "#string",
-                    "bio": "#string",
+                    "bio": "##string",
                     "image": "#string",
                     "following": '#boolean'
                 },
@@ -38,7 +38,7 @@ Feature: Validate favorite and comment function
                     "username": "#string",
                     "password": "#string",
                     "image": "#string",
-                    "bio": "#string",
+                    "bio": "##string",
                     "demo": '#boolean'
                 }
              ],
@@ -52,7 +52,7 @@ Feature: Validate favorite and comment function
     Given path 'articles'
     When method Get
     Then status 200
-    And match response.article ==
+    And match each response.articles ==
         """
         {
             "slug": '#string',
@@ -61,12 +61,10 @@ Feature: Validate favorite and comment function
             "body": '#string',
             "createdAt": '#string',
             "updatedAt": '#string',
-            "authorId": '#number',
-            "director": '#string',
             "tagList": '#array',
             "author":{
                 "username": '#string',
-                "bio": '#string',
+                "bio": '##string',
                 "image": '#string',
                 "following": '#boolean',
             },
@@ -109,10 +107,9 @@ Feature: Validate favorite and comment function
         }
         """
     * call read('ArticleComments.feature')
-    And response.comments.length == commentsCount + 1
-    * def commentsCount = response.comments.length
+    And response.comments.length == articlesCount + 1
     Given path 'articles', slugID, 'comments', commentID
     When method Delete
     Then status 204
     * call read('ArticleComments.feature')
-    And response.comments.length == commentsCount - 1
+    And response.comments.length == articlesCount

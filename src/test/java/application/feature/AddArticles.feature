@@ -22,7 +22,7 @@ Feature: Articles
     When method Post
     Then status 200
     And match response.article.title == articleName
-#    * def id = response.article.slug
-#    * def favoriteCount = response.article.favoritesCount
+    * def id = response.article.slug
+    * def favoriteCount = response.article.favoritesCount
 
 
